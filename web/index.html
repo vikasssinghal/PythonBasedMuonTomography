@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Muon Scattering Tomography - Real-Time Dashboard</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <span class="neon-text">MUON-TOMO</span>
+                <span class="sub-text">3D REAL-TIME TRACKING SIMULATION</span>
+            </div>
+            <div class="header-status">
+                <div class="status-indicator" id="sim-status-led"></div>
+                <span id="sim-status-text">SYSTEM READY</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="app-main">
+            <!-- Left Panel: Controls -->
+            <section class="panel left-panel">
+                <h2>DETECTOR CONFIG</h2>
+                <div class="form-group">
+                    <label for="plane-spacing">Plane Spacing (cm)</label>
+                    <input type="range" id="plane-spacing" min="10" max="30" value="15" step="1">
+                    <div class="range-val"><span id="plane-spacing-val">15</span> cm</div>
+                </div>
+
+                <h2>TARGET SETUP</h2>
+                <div class="form-group">
+                    <label for="hidden-material">Hidden Material</label>
+                    <select id="hidden-material">
+                        <option value="random">Random (Hidden / Unknown)</option>
+                        <option value="Air">Air (Empty)</option>
+                        <option value="Water">Water</option>
+                        <option value="Plastic">Plastic</option>
+                        <option value="Aluminium">Aluminium</option>
+                        <option value="Concrete">Concrete</option>
+                        <option value="Iron">Iron</option>
+                        <option value="Copper">Copper</option>
+                        <option value="Lead">Lead</option>
+                        <option value="Tungsten">Tungsten</option>
+                        <option value="Uranium">Uranium</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="hidden-shape">Hidden Geometry</label>
+                    <select id="hidden-shape">
+                        <option value="random">Random</option>
+                        <option value="cube">Cube</option>
+                        <option value="sphere">Sphere</option>
+                        <option value="cylinder">Cylinder</option>
+                        <option value="irregular">3D Cross (Irregular)</option>
+                    </select>
+                </div>
+                <div class="toggle-group">
+                    <label class="switch">
+                        <input type="checkbox" id="reveal-target">
+                        <span class="slider"></span>
+                    </label>
+                    <span>Reveal Ground Truth Target</span>
+                </div>
+
+                <h2>MUON ENERGY CONFIG</h2>
+                <div class="form-group">
+                    <label for="energy-mode">Energy Mode</label>
+                    <select id="energy-mode">
+                        <option value="random">Random (1-10 GeV)</option>
+                        <option value="manual">Manual Set (GeV)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="manual-energy-container" style="display: none;">
+                    <label for="manual-energy">Set Muon Energy (GeV)</label>
+                    <input type="range" id="manual-energy" min="1.0" max="10.0" value="3.0" step="0.1">
+                    <div class="range-val"><span id="manual-energy-val">3.0</span> GeV</div>
+                </div>
+
+                <h2>SIMULATION CONTROLS</h2>
+                <div class="controls-grid">
+                    <button class="btn btn-primary" id="btn-start">START RUN</button>
+                    <button class="btn btn-secondary" id="btn-pause" disabled>PAUSE</button>
+                    <button class="btn btn-secondary" id="btn-step">STEP</button>
+                    <button class="btn btn-danger" id="btn-reset">RESET</button>
+                </div>
+                <div class="form-group">
+                    <label for="sim-speed">Simulation Speed (muons/sec)</label>
+                    <input type="range" id="sim-speed" min="1" max="500" value="60">
+                    <div class="range-val"><span id="sim-speed-val">60</span> Hz</div>
+                </div>
+                <div class="form-group">
+                    <label for="run-limit-mode">Run Limit Mode</label>
+                    <select id="run-limit-mode">
+                        <option value="continuous">Continuous (Unlimited)</option>
+                        <option value="500">500 Muons</option>
+                        <option value="1000">1,000 Muons</option>
+                        <option value="5000">5,000 Muons</option>
+                        <option value="10000">10,000 Muons</option>
+                        <option value="50000">50,000 Muons</option>
+                        <option value="custom">Custom Target</option>
+                    </select>
+                </div>
+                <div class="form-group" id="custom-limit-container" style="display: none;">
+                    <label for="custom-limit-input">Target Muon Count</label>
+                    <input type="number" id="custom-limit-input" min="10" max="500000" value="1000" step="100">
+                </div>
+
+                <h2>VISUALIZATION OPTIONS</h2>
+                <div class="toggle-group">
+                    <input type="checkbox" id="vis-tracks" checked>
+                    <label for="vis-tracks">Show Muon Trajectories</label>
+                </div>
+                <div class="toggle-group">
+                    <input type="checkbox" id="vis-poca" checked>
+                    <label for="vis-poca">Show POCA Points</label>
+                </div>
+                <div class="toggle-group">
+                    <input type="checkbox" id="vis-voxels" checked>
+                    <label for="vis-voxels">Show Voxel Density Map</label>
+                </div>
+            </section>
+
+            <!-- Center Viewport -->
+            <section class="viewport-container">
+                <div class="viewport-canvas" id="canvas-container">
+                    <!-- Three.js will inject WebGL canvas here -->
+                </div>
+                <div class="view-overlay">
+                    <div class="camera-info">ORBIT CAMERA: LEFT CLICK + DRAG | ZOOM: SCROLL WHEEL</div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Statistics and Material Classifier -->
+            <section class="panel right-panel">
+                <h2>COUNTERS</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="label">Simulated Muons</span>
+                        <span class="value" id="stat-simulated">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="label">Reconstructed</span>
+                        <span class="value" id="stat-reconstructed">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="label">Tracker Efficiency</span>
+                        <span class="value" id="stat-efficiency">0.00%</span>
+                    </div>
+                </div>
+
+                <h2>CURRENT PARTICLE MONITOR</h2>
+                <div class="energy-gauge-box">
+                    <div class="gauge-header">
+                        <span>INCOMING MUON ENERGY</span>
+                        <span id="stat-last-energy">-- GeV</span>
+                    </div>
+                    <div class="gauge-container">
+                        <div class="gauge-bar" id="energy-gauge-bar" style="width: 0%; background-color: var(--cyan-glow);"></div>
+                    </div>
+                    <div class="gauge-ticks">
+                        <span>1 GeV</span>
+                        <span>5.5 GeV</span>
+                        <span>10 GeV</span>
+                    </div>
+                </div>
+
+                <h2>LIVE STATISTICS</h2>
+                <div class="stats-list">
+                    <div class="stat-row">
+                        <span class="lbl">Avg. Scattering Angle</span>
+                        <span class="val" id="stat-avg-angle">0.00 mrad</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="lbl">Avg. Centroid Shift (Track Deviation)</span>
+                        <span class="val" id="stat-avg-shift">0.000 cm</span>
+                    </div>
+                </div>
+
+                <h2>PLATE DIGITIZATION ERROR (AVG)</h2>
+                <div class="plates-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px;">
+                    <div class="stat-card" style="padding: 8px; text-align: center; background: rgba(30, 30, 42, 0.25); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span class="label" id="plate-label-1" style="font-size: 10px; display: block; margin-bottom: 4px;">Plate 1</span>
+                        <span class="value" id="plate-offset-1" style="font-size: 13px; font-weight: bold; color: var(--cyan-glow); display: block;">0.000 cm</span>
+                    </div>
+                    <div class="stat-card" style="padding: 8px; text-align: center; background: rgba(30, 30, 42, 0.25); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span class="label" id="plate-label-2" style="font-size: 10px; display: block; margin-bottom: 4px;">Plate 2</span>
+                        <span class="value" id="plate-offset-2" style="font-size: 13px; font-weight: bold; color: var(--cyan-glow); display: block;">0.000 cm</span>
+                    </div>
+                    <div class="stat-card" style="padding: 8px; text-align: center; background: rgba(30, 30, 42, 0.25); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span class="label" id="plate-label-3" style="font-size: 10px; display: block; margin-bottom: 4px;">Plate 3</span>
+                        <span class="value" id="plate-offset-3" style="font-size: 13px; font-weight: bold; color: var(--cyan-glow); display: block;">0.000 cm</span>
+                    </div>
+                    <div class="stat-card" style="padding: 8px; text-align: center; background: rgba(30, 30, 42, 0.25); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span class="label" id="plate-label-4" style="font-size: 10px; display: block; margin-bottom: 4px;">Plate 4</span>
+                        <span class="value" id="plate-offset-4" style="font-size: 13px; font-weight: bold; color: var(--cyan-glow); display: block;">0.000 cm</span>
+                    </div>
+                    <div class="stat-card" style="padding: 8px; text-align: center; background: rgba(30, 30, 42, 0.25); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span class="label" id="plate-label-5" style="font-size: 10px; display: block; margin-bottom: 4px;">Plate 5</span>
+                        <span class="value" id="plate-offset-5" style="font-size: 13px; font-weight: bold; color: var(--cyan-glow); display: block;">0.000 cm</span>
+                    </div>
+                    <div class="stat-card" style="padding: 8px; text-align: center; background: rgba(30, 30, 42, 0.25); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span class="label" id="plate-label-6" style="font-size: 10px; display: block; margin-bottom: 4px;">Plate 6</span>
+                        <span class="value" id="plate-offset-6" style="font-size: 13px; font-weight: bold; color: var(--cyan-glow); display: block;">0.000 cm</span>
+                    </div>
+                    <div class="stat-card" style="padding: 8px; text-align: center; background: rgba(30, 30, 42, 0.25); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span class="label" id="plate-label-7" style="font-size: 10px; display: block; margin-bottom: 4px;">Plate 7</span>
+                        <span class="value" id="plate-offset-7" style="font-size: 13px; font-weight: bold; color: var(--cyan-glow); display: block;">0.000 cm</span>
+                    </div>
+                    <div class="stat-card" style="padding: 8px; text-align: center; background: rgba(30, 30, 42, 0.25); border: 1px solid var(--border-color); border-radius: 6px;">
+                        <span class="label" id="plate-label-8" style="font-size: 10px; display: block; margin-bottom: 4px;">Plate 8</span>
+                        <span class="value" id="plate-offset-8" style="font-size: 13px; font-weight: bold; color: var(--cyan-glow); display: block;">0.000 cm</span>
+                    </div>
+                </div>
+
+                <h2>CLASSIFIER IDENTIFICATION</h2>
+                <div class="prediction-box">
+                    <div class="prediction-header">MOST PROBABLE MATERIAL:</div>
+                    <div class="prediction-value" id="prediction-name">CALIBRATING...</div>
+                    <div class="prediction-conf">Confidence: <span id="prediction-conf">0.0%</span></div>
+                    
+                    <div class="prediction-header" style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">RECONSTRUCTED GEOMETRY:</div>
+                    <div class="prediction-conf" style="margin-top: 4px;">Bounding Size: <span id="reconstructed-size" style="color: #a0a0a0; font-weight: bold;">CALIBRATING...</span></div>
+                </div>
+
+                <h2>LIVE CONFIDENCE CHART</h2>
+                <div class="chart-container" id="confidence-bars-list">
+                    <!-- Progress bars will be injected here -->
+                </div>
+
+                <h2>CLASSIFICATION NOTE</h2>
+                <div class="info-panel">
+                    <p><strong>Statistical Nature of Muon Tomography:</strong> Cosmic-ray muon scattering is a stochastic (random) physical process. Materials with similar densities and radiation lengths (like <strong>Iron [X₀ = 1.76 cm]</strong> and <strong>Copper [X₀ = 1.43 cm]</strong>) produce very close scattering patterns.</p>
+                    <p>Due to statistical fluctuations at low muon counts, the classifier may fluctuate. To increase prediction accuracy and stability, <strong>simulate more muons (e.g., &gt;5,000)</strong>.</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer / Logs -->
+        <footer class="app-footer-logs">
+            <div class="panel-header">LIVE EVENT STREAM / TRAJECTORY DATA FEED</div>
+            <div class="log-container" id="log-feed">
+                <div class="log-entry system">System initialized. Click "START RUN" to begin cosmic ray tracking.</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Script imports -->
+    <script src="physics.js?v=1.4"></script>
+    <script src="render.js?v=1.4"></script>
+    
+    <!-- Main Application Logic -->
+    <script>
+        // Initialize Physics and Render engines
+        const physics = new PhysicsEngine();
+        const renderer = new ThreeRenderer('canvas-container');
+        
+        // Rebuild planes initially
+        renderer.rebuildDetectorPlanes(physics.zPlanes);
+        physics.setupHiddenObject(
+            document.getElementById('hidden-shape').value,
+            document.getElementById('hidden-material').value
+        );
+        renderer.updateHiddenObjectVisuals(physics.hiddenObject, document.getElementById('reveal-target').checked);
+        
+        // Populate confidence chart DOM elements
+        const barsContainer = document.getElementById('confidence-bars-list');
+        Object.keys(MATERIALS).forEach(m => {
+            const row = document.createElement('div');
+            row.className = 'chart-row';
+            row.innerHTML = `
+                <div class="chart-label">${m}</div>
+                <div class="chart-bar-container">
+                    <div class="chart-bar" id="bar-${m}" style="width: 10%; background-color: ${MATERIALS[m].color};"></div>
+                </div>
+                <div class="chart-pct" id="pct-${m}">10.0%</div>
+            `;
+            barsContainer.appendChild(row);
+        });
+
+        // Loop controls
+        let isRunning = false;
+        let lastTime = 0;
+        let lastAnimTime = 0;
+        let simSpeedHz = parseInt(document.getElementById('sim-speed').value);
+        
+        // Setup control triggers
+        const btnStart = document.getElementById('btn-start');
+        const btnPause = document.getElementById('btn-pause');
+        const btnStep = document.getElementById('btn-step');
+        const btnReset = document.getElementById('btn-reset');
+        
+        const spacingSlider = document.getElementById('plane-spacing');
+        const speedSlider = document.getElementById('sim-speed');
+        const hiddenMaterialSelect = document.getElementById('hidden-material');
+        const hiddenShapeSelect = document.getElementById('hidden-shape');
+        const revealCheckbox = document.getElementById('reveal-target');
+        
+        const led = document.getElementById('sim-status-led');
+        const ledText = document.getElementById('sim-status-text');
+
+        // Spacing Update
+        spacingSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            document.getElementById('plane-spacing-val').innerText = val;
+            physics.updatePlanePositions(val);
+            renderer.rebuildDetectorPlanes(physics.zPlanes);
+        });
+
+        // Speed Update
+        speedSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            document.getElementById('sim-speed-val').innerText = val;
+            simSpeedHz = val;
+        });
+
+        // Dropdowns and checkbox trigger updates
+        hiddenMaterialSelect.addEventListener('change', () => resetSimulationAndObject());
+        hiddenShapeSelect.addEventListener('change', () => resetSimulationAndObject());
+        revealCheckbox.addEventListener('change', (e) => {
+            renderer.updateHiddenObjectVisuals(physics.hiddenObject, e.target.checked);
+        });
+
+        // Energy controls
+        const energyModeSelect = document.getElementById('energy-mode');
+        const manualEnergyContainer = document.getElementById('manual-energy-container');
+        const manualEnergySlider = document.getElementById('manual-energy');
+
+        energyModeSelect.addEventListener('change', (e) => {
+            physics.energyMode = e.target.value;
+            if (e.target.value === 'manual') {
+                manualEnergyContainer.style.display = 'flex';
+                physics.manualEnergyGeV = parseFloat(manualEnergySlider.value);
+            } else {
+                manualEnergyContainer.style.display = 'none';
+            }
+        });
+
+        manualEnergySlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            document.getElementById('manual-energy-val').innerText = val.toFixed(1);
+            physics.manualEnergyGeV = val;
+        });
+
+        // Run Limit controls
+        const runLimitModeSelect = document.getElementById('run-limit-mode');
+        const customLimitContainer = document.getElementById('custom-limit-container');
+        const customLimitInput = document.getElementById('custom-limit-input');
+        
+        let targetLimit = -1; // -1 means continuous
+        
+        runLimitModeSelect.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val === 'continuous') {
+                customLimitContainer.style.display = 'none';
+                targetLimit = -1;
+            } else if (val === 'custom') {
+                customLimitContainer.style.display = 'flex';
+                targetLimit = parseInt(customLimitInput.value) || 1000;
+            } else {
+                customLimitContainer.style.display = 'none';
+                targetLimit = parseInt(val);
+            }
+        });
+        
+        customLimitInput.addEventListener('input', (e) => {
+            targetLimit = parseInt(e.target.value) || 1000;
+        });
+
+        function resetSimulationAndObject() {
+            physics.reset();
+            
+            // Sync with current UI control values to prevent reset() from reverting them
+            physics.energyMode = energyModeSelect.value;
+            physics.manualEnergyGeV = parseFloat(manualEnergySlider.value);
+            physics.updatePlanePositions(parseInt(spacingSlider.value));
+            
+            physics.setupHiddenObject(hiddenShapeSelect.value, hiddenMaterialSelect.value);
+            renderer.clearRecon();
+            renderer.updateHiddenObjectVisuals(physics.hiddenObject, revealCheckbox.checked);
+            updateUIStats();
+            
+            // Reset status LED
+            led.style.backgroundColor = "";
+            led.style.boxShadow = "";
+            led.className = "status-indicator";
+            ledText.innerText = "SYSTEM READY";
+            
+            document.getElementById('log-feed').innerHTML = '<div class="log-entry system">Target reset. Simulation state cleared.</div>';
+        }
+
+        // Toggles
+        document.getElementById('vis-tracks').addEventListener('change', (e) => {
+            renderer.persistentTracksMeshIn.visible = e.target.checked;
+            renderer.persistentTracksMeshOut.visible = e.target.checked;
+        });
+        document.getElementById('vis-poca').addEventListener('change', (e) => {
+            renderer.pocaGroup.visible = e.target.checked;
+        });
+        document.getElementById('vis-voxels').addEventListener('change', (e) => {
+            renderer.voxelGroup.visible = e.target.checked;
+        });
+
+        // Animation Loop
+        function mainLoop() {
+            if (isRunning) {
+                // Check if target limit has been reached
+                if (targetLimit > 0 && physics.muonsSimulated >= targetLimit) {
+                    isRunning = false;
+                    btnStart.disabled = false;
+                    btnPause.disabled = true;
+                    btnStep.disabled = false;
+                    
+                    led.className = "status-indicator run"; 
+                    led.style.backgroundColor = "var(--cyan-glow)";
+                    led.style.boxShadow = "0 0 10px var(--cyan-glow)";
+                    ledText.innerText = "RUN COMPLETE";
+                    
+                    const logFeed = document.getElementById('log-feed');
+                    if (logFeed) {
+                        const entry = document.createElement('div');
+                        entry.className = 'log-entry system';
+                        entry.innerText = `Simulation complete. Reached target limit of ${targetLimit.toLocaleString()} muons.`;
+                        logFeed.insertBefore(entry, logFeed.firstChild);
+                    }
+                    
+                    updateUIStats(true); // Force final reconstruction!
+                    renderer.render();
+                    requestAnimationFrame(mainLoop);
+                    return;
+                }
+                
+                // Determine how many muons to simulate in this frame (targeting 60fps)
+                let numToSimulate = Math.max(1, Math.round(simSpeedHz / 60));
+                
+                // Prevent overshooting the limit
+                if (targetLimit > 0) {
+                    const remaining = targetLimit - physics.muonsSimulated;
+                    if (remaining < numToSimulate) {
+                        numToSimulate = remaining;
+                    }
+                }
+                
+                for (let i = 0; i < numToSimulate; i++) {
+                    const track = physics.simulateSingleMuon();
+                    
+                    if (track) {
+                        // Add to persistent tracking and hits visualizer instantly
+                        renderer.addPersistentTrackAndHits(track);
+                        
+                        // Update 3D POCA and voxels
+                        if (physics.muonsReconstructed % 10 === 0) {
+                            renderer.updateReconstructionVisuals(physics);
+                        }
+                        
+                        // Limit muon trajectory particle animations to 5 per second to prevent lag
+                        const now = Date.now();
+                        const tracksEnabled = document.getElementById('vis-tracks').checked;
+                        if (tracksEnabled && (now - lastAnimTime > 200)) {
+                            lastAnimTime = now;
+                            renderer.animateMuonTrack(track);
+                        }
+                    }
+                }
+                updateUIStats();
+            }
+            
+            renderer.render();
+            requestAnimationFrame(mainLoop);
+        }
+
+        btnStart.addEventListener('click', () => {
+            isRunning = true;
+            btnStart.disabled = true;
+            btnPause.disabled = false;
+            btnStep.disabled = true;
+            
+            // Clear any inline completion colors
+            led.style.backgroundColor = "";
+            led.style.boxShadow = "";
+            led.className = "status-indicator run";
+            ledText.innerText = "RUNNING";
+        });
+
+        btnPause.addEventListener('click', () => {
+            isRunning = false;
+            btnStart.disabled = false;
+            btnPause.disabled = true;
+            btnStep.disabled = false;
+            
+            led.className = "status-indicator pause";
+            ledText.innerText = "PAUSED";
+        });
+
+        btnStep.addEventListener('click', () => {
+            const track = physics.simulateSingleMuon();
+            if (track) {
+                renderer.updateReconstructionVisuals(physics);
+                renderer.animateMuonTrack(track);
+            }
+            updateUIStats();
+        });
+
+        btnReset.addEventListener('click', () => {
+            resetSimulationAndObject();
+        });
+
+        function updateUIStats(forceFinal = false) {
+            document.getElementById('stat-simulated').innerText = physics.muonsSimulated.toLocaleString();
+            document.getElementById('stat-reconstructed').innerText = physics.muonsReconstructed.toLocaleString();
+            
+            // Update live energy gauge for the last simulated track
+            const lastTrack = physics.recentTracks[physics.recentTracks.length - 1];
+            if (lastTrack) {
+                const energyGeV = lastTrack.momentum / 1000.0;
+                document.getElementById('stat-last-energy').innerText = energyGeV.toFixed(2) + " GeV";
+                
+                const gaugeBar = document.getElementById('energy-gauge-bar');
+                const pct = ((energyGeV - 1.0) / 9.0) * 100;
+                gaugeBar.style.width = Math.min(100, Math.max(0, pct)) + "%";
+                
+                if (energyGeV < 3.0) {
+                    gaugeBar.style.backgroundColor = "var(--cyan-glow)";
+                } else if (energyGeV < 7.0) {
+                    gaugeBar.style.backgroundColor = "var(--yellow-glow)";
+                } else {
+                    gaugeBar.style.backgroundColor = "var(--pink-glow)";
+                }
+            }
+            
+            const efficiency = physics.muonsSimulated > 0 ? (physics.muonsReconstructed / physics.muonsSimulated * 100).toFixed(2) : "0.00";
+            document.getElementById('stat-efficiency').innerText = efficiency + "%";
+            
+            document.getElementById('stat-avg-angle').innerText = (physics.avgMeasuredAngle * 1000.0).toFixed(2) + " mrad";
+            document.getElementById('stat-avg-shift').innerText = physics.avgMeasuredShift.toFixed(3) + " cm";
+            
+            // Decide whether to reconstruct the shape/size
+            const isPausedOrComplete = !isRunning || forceFinal;
+            const isContinuousMilestone = (targetLimit === -1 && physics.muonsSimulated > 0 && physics.muonsSimulated % 500 === 0);
+            const shouldReconstruct = (isPausedOrComplete && physics.intersectCount >= 100) || forceFinal || isContinuousMilestone;
+            
+            if (physics.intersectCount >= 5) {
+                document.getElementById('prediction-name').innerText = physics.predictedMaterial.toUpperCase();
+                document.getElementById('prediction-name').style.color = MATERIALS[physics.predictedMaterial].color;
+                document.getElementById('prediction-conf').innerText = (physics.classificationConfidence * 100).toFixed(1) + "%";
+                
+                if (shouldReconstruct) {
+                    const recon = physics.reconstructShapeAndSize();
+                    document.getElementById('reconstructed-size').innerText = recon.sizeText;
+                    document.getElementById('reconstructed-size').style.color = "#ffffff";
+                    
+                    // Draw 3D wireframe mesh in WebGL
+                    renderer.drawReconstructedMesh(recon);
+                }
+            } else {
+                document.getElementById('prediction-name').innerText = "CALIBRATING...";
+                document.getElementById('prediction-name').style.color = "#a0a0a0";
+                document.getElementById('prediction-conf').innerText = "0.0%";
+                
+                document.getElementById('reconstructed-size').innerText = "CALIBRATING...";
+                document.getElementById('reconstructed-size').style.color = "#a0a0a0";
+                
+                // Clear reconstructed 3D mesh
+                renderer.drawReconstructedMesh(null);
+            }
+            
+            // Update individual plate offsets and labels
+            for (let d = 0; d < 8; d++) {
+                const zVal = physics.zPlanes[d].toFixed(0);
+                const labelElem = document.getElementById(`plate-label-${d+1}`);
+                if (labelElem) labelElem.innerText = `Plate ${d+1} (Z=${zVal})`;
+                
+                const avgOffset = physics.planeOffsetsCount[d] > 0 
+                    ? (physics.planeOffsetsSum[d] / physics.planeOffsetsCount[d]) 
+                    : 0.0;
+                document.getElementById(`plate-offset-${d+1}`).innerText = avgOffset.toFixed(3) + " cm";
+            }
+            
+            Object.keys(MATERIALS).forEach(m => {
+                const conf = physics.materialConfidences[m];
+                const bar = document.getElementById(`bar-${m}`);
+                const pct = document.getElementById(`pct-${m}`);
+                if (bar && pct) {
+                    bar.style.width = (conf * 100) + "%";
+                    pct.innerText = (conf * 100).toFixed(1) + "%";
+                }
+            });
+        }
+
+        // Start render and simulation loop
+        requestAnimationFrame(mainLoop);
+    </script>
+</body>
+</html>
