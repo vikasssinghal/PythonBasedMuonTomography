@@ -53,22 +53,17 @@ The resulting changes in particle direction contain information about the materi
 
 The approximate projected RMS scattering angle can be estimated using the Highland formula:
 
-\[
-\theta_0 \approx
-\frac{13.6\,\mathrm{MeV}}{\beta pc}
-\sqrt{\frac{x}{X_0}}
-\left[
-1+0.038\ln\left(\frac{x}{X_0}\right)
-\right]
-\]
+$$
+\theta_0 \approx \frac{13.6\,\mathrm{MeV}}{\beta pc} \sqrt{\frac{x}{X_0}} \left[ 1 + 0.038\ln\left(\frac{x}{X_0}\right) \right]
+$$
 
 Where:
 
-- \(\theta_0\): Projected RMS scattering angle.
-- \(p\): Muon momentum.
-- \(\beta\): Muon velocity divided by the speed of light.
-- \(x\): Material thickness.
-- \(X_0\): Radiation length of the material.
+- $\theta_0$: Projected RMS scattering angle.
+- $p$: Muon momentum.
+- $\beta$: Muon velocity divided by the speed of light.
+- $x$: Material thickness.
+- $X_0$: Radiation length of the material.
 
 The Highland formula provides an analytical approximation. Geant4 allows the framework to investigate particle transport and scattering through Monte Carlo physics processes rather than relying exclusively on this parameterization.
 
