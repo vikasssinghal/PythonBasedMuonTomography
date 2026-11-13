@@ -1,0 +1,7 @@
+True Material,Predicted Material,Confidence (%),Mean Angle (rad)
+Aluminium,Aluminium,75.90,0.0087
+Iron,Iron,81.97,0.0197
+Copper,Copper,74.14,0.0225
+Lead,Lead,96.64,0.0358
+Tungsten,Uranium,60.97,0.0489
+Uranium,Uranium,61.65,0.0515
