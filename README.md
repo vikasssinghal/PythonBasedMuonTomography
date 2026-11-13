@@ -209,7 +209,7 @@ This project can be used for:
 Clone the repository:
 
 ```bash
-git clone https://github.com/prathamchawda231-netizen/muon.git
+git clone https://github.com/vikasssinghal/PythonBasedMuonTomography.git
 cd muon
 ```
 
